@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能音视频处理平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .platform-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .url-input {
+            font-family: 'Courier New', monospace;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 20px;
+            border: 2px dashed #e1e5e9;
+            border-radius: 12px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 60px;
+        }
+
+        .file-input-display:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .file-input-display.has-file {
+            border-color: #28a745;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .file-input-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .file-input-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 18px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-container {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .loading-container.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 6px;
+            background: #e1e5e9;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .result-container {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .result-container.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result-description {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .download-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .error-container {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #fee;
+            color: #c33;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .error-container.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .error-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .form-validation {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-validation.show {
+            display: block;
+        }
+
+        .features-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-top: 40px;
+            color: white;
+        }
+
+        .features-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        /* 历史记录样式 */
+        .history-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-top: 40px;
+            color: white;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .history-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .history-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .history-item-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .history-item-type {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .history-item-type.extract {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+
+        .history-item-type.synthesize {
+            background: rgba(102, 126, 234, 0.3);
+            color: #667eea;
+        }
+
+        .history-item-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .history-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-info-icon {
+            font-size: 1.2rem;
+        }
+
+        .history-info-text {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .history-item-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .history-action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-history-btn {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.5);
+        }
+
+        .download-history-btn:hover {
+            background: rgba(40, 167, 69, 0.5);
+        }
+
+        .delete-history-btn {
+            background: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.5);
+        }
+
+        .delete-history-btn:hover {
+            background: rgba(220, 53, 69, 0.5);
+        }
+
+        .history-loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .history-loading .spinner {
+            margin: 0 auto 20px;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.7;
+        }
+
+        .history-empty-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .history-empty-text {
+            font-size: 1.1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        @media (max-width: 768px) {
+            .platform-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .platform-card {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
+
+            .generate-btn {
+                padding: 15px 20px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 智能音视频处理平台</h1>
+            <p>专业的音视频处理工具，让创作更简单</p>
+        </div>
+
+        <div class="platform-grid">
+            <!-- 提取背景音乐板块 -->
+            <div class="platform-card">
+                <div class="card-header">
+                    <div class="card-icon">🎵</div>
+                    <div class="card-title">提取背景音乐</div>
+                    <div class="card-description">
+                        从视频中智能提取背景音乐，支持多种音频格式输出
+                    </div>
+                </div>
+
+                <form id="extractMusicForm">
+                    <div class="input-group">
+                        <label for="videoUrl" class="input-label">
+                            🔗 视频链接
+                        </label>
+                        <input 
+                            type="url" 
+                            id="videoUrl" 
+                            class="input-field url-input" 
+                            placeholder="请输入视频链接 (支持 TikTok, Insgram, Facebook)"
+                            required
+                        >
+                        <div class="form-validation" id="videoUrlValidation">请输入有效的视频链接</div>
+                    </div>
+
+                    <button type="submit" id="extractBtn" class="generate-btn">
+                        🎵 提取背景音乐
+                    </button>
+                </form>
+
+                <div class="error-container" id="extractError">
+                    <div class="error-icon">❌</div>
+                    <div id="extractErrorMessage">处理过程中出现错误，请稍后重试。</div>
+                </div>
+            </div>
+
+            <!-- 智能制作视频板块 -->
+            <div class="platform-card">
+                <div class="card-header">
+                    <div class="card-icon">🎬</div>
+                    <div class="card-title">智能制作视频</div>
+                    <div class="card-description">
+                        基于视频模版和素材，智能制作专业的视频作品
+                    </div>
+                </div>
+
+                <form id="synthesizeVideoForm">
+                    <div class="input-group">
+                        <label for="synthesizeVideoUrl" class="input-label">
+                            🎨 我想要的视频模版链接
+                        </label>
+                        <input 
+                            type="url" 
+                            id="synthesizeVideoUrl" 
+                            class="input-field url-input" 
+                            placeholder="请输入视频模版链接，作为合成的基础模版"
+                        >
+                        <div class="form-validation" id="synthesizeUrlValidation">请输入有效的视频模版链接</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">
+                            📁 本地视频上传
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="localVideoFile" class="file-input" accept="video/*" multiple>
+                            <div class="file-input-display" id="fileInputDisplay">
+                                <div class="file-input-icon">📁</div>
+                                <div class="file-input-text">点击选择视频文件或拖拽到此处</div>
+                            </div>
+                        </div>
+                        <div class="file-info" id="fileInfo" style="display: none;"></div>
+                        <div class="form-validation" id="fileValidation">请至少选择一个视频文件</div>
+                    </div>
+
+                    <button type="submit" id="synthesizeBtn" class="generate-btn">
+                        🎬 智能制作视频
+                    </button>
+                </form>
+
+                <div class="loading-container" id="synthesizeLoading">
+                    <div class="spinner"></div>
+                    <div class="loading-text" id="synthesizeLoadingText">正在制作视频...</div>
+                    <div class="loading-progress">
+                        <div class="progress-bar" id="synthesizeProgressBar"></div>
+                    </div>
+                </div>
+
+                <div class="result-container" id="synthesizeResult">
+                    <div class="result-icon">🎉</div>
+                    <div class="result-title">视频制作完成！</div>
+                    <div class="result-description" id="synthesizeResultDescription">
+                        您的视频已经制作完成，点击下方按钮即可下载。
+                    </div>
+                    <a href="#" id="synthesizeDownloadBtn" class="download-btn" download>
+                        📥 下载制作视频
+                    </a>
+                </div>
+
+                <div class="error-container" id="synthesizeError">
+                    <div class="error-icon">❌</div>
+                    <div id="synthesizeErrorMessage">处理过程中出现错误，请稍后重试。</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录模块 -->
+        <div class="history-section">
+            <div class="history-header">
+                <h2 class="history-title">📋 处理历史</h2>
+                <button id="refreshHistoryBtn" class="refresh-btn">🔄 刷新</button>
+            </div>
+            
+            <div class="history-list" id="historyList">
+                <div class="history-loading">
+                    <div class="spinner"></div>
+                    <p>正在加载历史记录...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <div class="features-title">平台特色功能</div>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">AI智能处理</div>
+                    <div class="feature-description">采用先进的AI技术，智能分析音视频内容，提供高质量处理结果</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">快速处理</div>
+                    <div class="feature-description">高效的云端处理，快速完成音视频提取和合成任务</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎨</div>
+                    <div class="feature-title">多种格式</div>
+                    <div class="feature-description">支持多种音视频格式，满足不同场景和需求</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">自定义设置</div>
+                    <div class="feature-description">支持多种参数调节，让您获得最佳的处理效果</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AudioVideoPlatform {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                // 提取背景音乐表单
+                const extractForm = document.getElementById('extractMusicForm');
+                extractForm.addEventListener('submit', (e) => this.handleExtractMusic(e));
+
+                // 合成视频表单
+                const synthesizeForm = document.getElementById('synthesizeVideoForm');
+                synthesizeForm.addEventListener('submit', (e) => this.handleSynthesizeVideo(e));
+
+                // 文件上传处理
+                this.setupFileUpload();
+
+            // 历史记录功能
+            this.setupHistory();
+            
+            // 设置自动刷新历史记录
+            this.setupAutoRefresh();
+            }
+
+            setupFileUpload() {
+                const fileInput = document.getElementById('localVideoFile');
+                const fileDisplay = document.getElementById('fileInputDisplay');
+                const fileInfo = document.getElementById('fileInfo');
+
+                fileInput.addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files);
+                    if (files.length > 0) {
+                        fileDisplay.classList.add('has-file');
+                        fileDisplay.innerHTML = `
+                            <div class="file-input-icon">✅</div>
+                            <div class="file-input-text">已选择 ${files.length} 个文件</div>
+                        `;
+                        
+                        const fileList = files.map(file => 
+                            `${file.name} (${this.formatFileSize(file.size)})`
+                        ).join('<br>');
+                        
+                        fileInfo.innerHTML = `<strong>选择的文件:</strong><br>${fileList}`;
+                        fileInfo.style.display = 'block';
+                    } else {
+                        fileDisplay.classList.remove('has-file');
+                        fileDisplay.innerHTML = `
+                            <div class="file-input-icon">📁</div>
+                            <div class="file-input-text">点击选择视频文件或拖拽到此处</div>
+                        `;
+                        fileInfo.style.display = 'none';
+                    }
+                });
+
+                // 拖拽上传
+                fileDisplay.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    fileDisplay.style.borderColor = '#667eea';
+                    fileDisplay.style.background = '#f0f4ff';
+                });
+
+                fileDisplay.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    fileDisplay.style.borderColor = '#e1e5e9';
+                    fileDisplay.style.background = '#f8f9fa';
+                });
+
+                fileDisplay.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    fileDisplay.style.borderColor = '#e1e5e9';
+                    fileDisplay.style.background = '#f8f9fa';
+                    
+                    const files = Array.from(e.dataTransfer.files).filter(file => 
+                        file.type.startsWith('video/')
+                    );
+                    
+                    if (files.length > 0) {
+                        fileInput.files = this.createFileList(files);
+                        fileInput.dispatchEvent(new Event('change'));
+                    }
+                });
+            }
+
+            createFileList(files) {
+                const dt = new DataTransfer();
+                files.forEach(file => dt.items.add(file));
+                return dt.files;
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            async handleExtractMusic(e) {
+                e.preventDefault();
+                
+                const videoUrl = document.getElementById('videoUrl').value.trim();
+                
+                if (!this.isValidUrl(videoUrl)) {
+                    this.showValidation('videoUrlValidation', '请输入有效的视频链接');
+                    return;
+                }
+
+                this.hideValidation('videoUrlValidation');
+                this.hideExtractError();
+
+                try {
+                    const result = await this.extractBackgroundMusic(videoUrl);
+                    // 不再显示传统结果页面，任务已添加到历史记录
+                    console.log('音频提取任务已提交:', result);
+                } catch (error) {
+                    this.showExtractError(error.message);
+                } finally {
+                    // 提取状态显示已删除，无需隐藏loading
+                }
+            }
+
+            async handleSynthesizeVideo(e) {
+                e.preventDefault();
+                
+                const videoUrl = document.getElementById('synthesizeVideoUrl').value.trim();
+                const localFiles = document.getElementById('localVideoFile').files;
+                
+                if (!videoUrl && localFiles.length === 0) {
+                    this.showValidation('fileValidation', '请至少选择一个视频文件或输入视频模版链接');
+                    return;
+                }
+
+                if (!this.isValidUrl(videoUrl)) {
+                    this.showValidation('synthesizeUrlValidation', '请输入有效的视频模版链接');
+                    return;
+                }
+
+                this.hideAllValidations();
+                this.showSynthesizeLoading();
+                this.hideSynthesizeError();
+                this.hideSynthesizeResult();
+
+                try {
+                    const result = await this.synthesizeVideo(videoUrl, localFiles);
+                    // 不再显示传统结果页面，任务已添加到历史记录
+                    console.log('视频制作任务已提交:', result);
+                } catch (error) {
+                    this.showSynthesizeError(error.message);
+                } finally {
+                    this.hideSynthesizeLoading();
+                }
+            }
+
+            async extractBackgroundMusic(videoUrl) {
+                const loadingSteps = [
+                    '正在分析视频内容...',
+                    '正在提取音频轨道...',
+                    '正在优化音频质量...',
+                    '正在生成背景音乐...',
+                    '即将完成...'
+                ];
+
+                // 调用本地API
+                const response = await fetch('/api/extract-music', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ videoUrl })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || '提取背景音乐失败');
+                }
+
+                // 显示成功消息并刷新历史记录
+                this.loadHistory();
+                return {
+                    success: true,
+                    message: result.message,
+                    taskId: result.taskId
+                };
+            }
+
+            async synthesizeVideo(videoUrl, localFiles) {
+                const loadingSteps = [
+                    '正在分析视频素材...',
+                    '正在处理视频文件...',
+                    '正在智能制作...',
+                    '正在优化视频质量...',
+                    '即将完成...'
+                ];
+
+                for (let i = 0; i < loadingSteps.length; i++) {
+                    document.getElementById('synthesizeLoadingText').textContent = loadingSteps[i];
+                    document.getElementById('synthesizeProgressBar').style.width = `${((i + 1) / loadingSteps.length) * 100}%`;
+                    await this.delay(1000);
+                }
+
+                // 准备文件数据
+                const fileData = [];
+                if (localFiles && localFiles.length > 0) {
+                    for (let i = 0; i < localFiles.length; i++) {
+                        const file = localFiles[i];
+                        const base64 = await this.fileToBase64(file);
+                        fileData.push({
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            data: base64
+                        });
+                    }
+                }
+                // 上传文件到服务器
+                const uploadResponse = await fetch('/api/upload', {
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        files: fileData
+                    })
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`文件上传失败: HTTP ${uploadResponse.status}`);
+                }
+
+                const uploadResult = await uploadResponse.json();
+                console.log('uploadResult:>>>>', uploadResult);
+                if (!uploadResult.success) {
+                    throw new Error(uploadResult.message || '文件上传失败');
+                }
+
+                // 获取上传后的文件URL列表
+                const uploadedFileUrl = uploadResult.results.success[0].uploadedName;
+                // 调用本地API
+                const response = await fetch('/api/synthesize-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        videoUrl, 
+                        uploadedFileUrl: uploadedFileUrl 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || '视频制作失败');
+                }
+
+                // 显示成功消息并刷新历史记录
+                this.showSynthesizeSuccess('视频制作已开始，请查看历史记录');
+                this.loadHistory();
+
+                return {
+                    success: true,
+                    message: result.message,
+                    taskId: result.taskId
+                };
+            }
+
+            fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+            }
+
+            isValidUrl(string) {
+                try {
+                    const url = new URL(string);
+                    const hostname = url.hostname.toLowerCase();
+                    
+                    // 检查是否是 TikTok、Instagram 或 Facebook 链接
+                    const validDomains = [
+                        'tiktok.com',
+                        'www.tiktok.com',
+                        'instagram.com',
+                        'www.instagram.com',
+                        'facebook.com', 
+                        'www.facebook.com',
+                        'fb.com',
+                        'www.fb.com'
+                    ];
+                    
+                    return validDomains.some(domain => hostname === domain);
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            showValidation(elementId, message) {
+                const element = document.getElementById(elementId);
+                element.textContent = message;
+                element.classList.add('show');
+            }
+
+            hideValidation(elementId) {
+                document.getElementById(elementId).classList.remove('show');
+            }
+
+            hideAllValidations() {
+                const validations = ['videoUrlValidation', 'synthesizeUrlValidation', 'fileValidation'];
+                validations.forEach(id => this.hideValidation(id));
+            }
+
+            // 提取背景音乐相关方法（状态显示已删除）
+
+            showExtractError(message) {
+                document.getElementById('extractErrorMessage').textContent = message;
+                document.getElementById('extractError').classList.add('show');
+            }
+
+            hideExtractError() {
+                document.getElementById('extractError').classList.remove('show');
+            }
+
+            // 合成视频相关方法
+            showSynthesizeLoading() {
+                document.getElementById('synthesizeLoading').classList.add('show');
+                document.getElementById('synthesizeBtn').disabled = true;
+                document.getElementById('synthesizeBtn').textContent = '制作中...';
+                document.getElementById('synthesizeProgressBar').style.width = '0%';
+            }
+
+            hideSynthesizeLoading() {
+                document.getElementById('synthesizeLoading').classList.remove('show');
+                document.getElementById('synthesizeBtn').disabled = false;
+                document.getElementById('synthesizeBtn').textContent = '🎬 智能制作视频';
+            }
+
+            showSynthesizeResult(result) {
+                document.getElementById('synthesizeResult').classList.add('show');
+                document.getElementById('synthesizeDownloadBtn').href = result.downloadUrl;
+                document.getElementById('synthesizeDownloadBtn').download = result.fileName;
+                
+                const description = `文件大小: ${result.fileSize} | 时长: ${result.duration}`;
+                document.getElementById('synthesizeResultDescription').textContent = description;
+            }
+
+            hideSynthesizeResult() {
+                document.getElementById('synthesizeResult').classList.remove('show');
+            }
+
+            showSynthesizeError(message) {
+                document.getElementById('synthesizeErrorMessage').textContent = message;
+                document.getElementById('synthesizeError').classList.add('show');
+            }
+
+            hideSynthesizeError() {
+                document.getElementById('synthesizeError').classList.remove('show');
+            }
+
+            showExtractSuccess(message) {
+                // 创建临时成功提示
+                const successDiv = document.createElement('div');
+                successDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #28a745;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-weight: 600;
+                    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                `;
+                successDiv.textContent = message;
+                document.body.appendChild(successDiv);
+
+                // 3秒后自动移除
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        successDiv.parentNode.removeChild(successDiv);
+                    }
+                }, 3000);
+            }
+
+            showSynthesizeSuccess(message) {
+                // 创建临时成功提示
+                const successDiv = document.createElement('div');
+                successDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #667eea;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-weight: 600;
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                `;
+                successDiv.textContent = message;
+                document.body.appendChild(successDiv);
+
+                // 3秒后自动移除
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        successDiv.parentNode.removeChild(successDiv);
+                    }
+                }, 3000);
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // 历史记录相关方法
+            setupHistory() {
+                const refreshBtn = document.getElementById('refreshHistoryBtn');
+                refreshBtn.addEventListener('click', () => this.loadHistory());
+                
+                // 页面加载时自动加载历史记录
+                this.loadHistory();
+            }
+
+            async loadHistory() {
+                const historyList = document.getElementById('historyList');
+                
+                try {
+                    // 显示加载状态
+                    historyList.innerHTML = `
+                        <div class="history-loading">
+                            <div class="spinner"></div>
+                            <p>正在加载历史记录...</p>
+                        </div>
+                    `;
+
+                    const response = await fetch('/api/history');
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.renderHistory(result.data);
+                    } else {
+                        throw new Error(result.message || '加载历史记录失败');
+                    }
+                } catch (error) {
+                    console.error('加载历史记录错误:', error);
+                    historyList.innerHTML = `
+                        <div class="history-empty">
+                            <div class="history-empty-icon">❌</div>
+                            <div class="history-empty-text">加载历史记录失败</div>
+                        </div>
+                    `;
+                }
+            }
+
+            renderHistory(historyData) {
+                const historyList = document.getElementById('historyList');
+                
+                if (!historyData || historyData.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="history-empty">
+                            <div class="history-empty-icon">📋</div>
+                            <div class="history-empty-text">暂无历史记录</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 检查状态变化并显示通知
+                this.checkStatusChanges(historyData);
+
+                historyList.innerHTML = historyData.map(item => `
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <h3 class="history-item-title">${item.title}</h3>
+                            <span class="history-item-type ${item.type}">
+                                ${item.type === 'extract' ? '🎵 音频提取' : '🎬 视频制作'}
+                            </span>
+                        </div>
+                        
+                        <div class="history-item-info">
+                            <div class="history-info-item">
+                                <span class="history-info-icon">📁</span>
+                                <span class="history-info-text">${item.fileName}</span>
+                            </div>
+                            <div class="history-info-item">
+                                <span class="history-info-icon">📊</span>
+                                <span class="history-info-text">${item.fileSize}</span>
+                            </div>
+                            <div class="history-info-item">
+                                <span class="history-info-icon">⏱️</span>
+                                <span class="history-info-text">${item.duration}</span>
+                            </div>
+                            <div class="history-info-item">
+                                <span class="history-info-icon">📅</span>
+                                <span class="history-info-text">${this.formatDate(item.createdAt)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="history-item-actions">
+                            ${item.status === 'completed' && item.downloadUrl ? `
+                                <a href="${item.downloadUrl}" class="history-action-btn download-history-btn" download>
+                                    📥 下载
+                                </a>
+                            ` : `
+                                <span class="history-action-btn" style="opacity: 0.5; cursor: not-allowed;">
+                                    ${item.status === 'processing' ? '⏳ 处理中' : item.status === 'failed' ? '❌ 失败' : '⏳ 处理中'}
+                                </span>
+                            `}
+                            <button class="history-action-btn delete-history-btn" onclick="audioVideoPlatform.deleteHistory('${item.id}')">
+                                🗑️ 删除
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async deleteHistory(id) {
+                if (!confirm('确定要删除这条记录吗？')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 重新加载历史记录
+                        this.loadHistory();
+                    } else {
+                        throw new Error(result.message || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除历史记录错误:', error);
+                    alert('删除记录失败: ' + error.message);
+                }
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) {
+                    return '刚刚';
+                } else if (diffMins < 60) {
+                    return `${diffMins}分钟前`;
+                } else if (diffHours < 24) {
+                    return `${diffHours}小时前`;
+                } else if (diffDays < 7) {
+                    return `${diffDays}天前`;
+                } else {
+                    return date.toLocaleDateString();
+                }
+            }
+
+            setupAutoRefresh() {
+                // 智能定时刷新：检查是否有未完成的任务
+                setInterval(() => {
+                    this.checkAndRefreshHistory();
+                }, 10000); // 每10秒检查一次
+            }
+
+            async checkAndRefreshHistory() {
+                try {
+                    const response = await fetch('/api/history');
+                    const result = await response.json();
+
+                    if (result.success && result.data) {
+                        // 检查是否有未完成的任务
+                        const hasUnfinishedTasks = result.data.some(item => 
+                            item.status === 'processing' || item.status === 'failed'
+                        );
+
+                        if (hasUnfinishedTasks) {
+                            console.log('检测到未完成任务，刷新历史记录');
+                            this.renderHistory(result.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error('检查历史记录状态失败:', error);
+                }
+            }
+
+            checkStatusChanges(newHistoryData) {
+                // 获取当前显示的历史记录状态
+                const currentItems = document.querySelectorAll('.history-item');
+                const currentStatuses = Array.from(currentItems).map(item => {
+                    const statusElement = item.querySelector('.history-action-btn');
+                    if (statusElement) {
+                        if (statusElement.textContent.includes('下载')) {
+                            return 'completed';
+                        } else if (statusElement.textContent.includes('处理中')) {
+                            return 'processing';
+                        } else if (statusElement.textContent.includes('失败')) {
+                            return 'failed';
+                        }
+                    }
+                    return 'unknown';
+                });
+
+                // 检查状态变化
+                newHistoryData.forEach((newItem, index) => {
+                    const currentStatus = currentStatuses[index];
+                    const newStatus = newItem.status;
+
+                    if (currentStatus !== newStatus) {
+                        if (currentStatus === 'processing' && newStatus === 'completed') {
+                            this.showTaskCompletedNotification(newItem);
+                        } else if (currentStatus === 'processing' && newStatus === 'failed') {
+                            this.showTaskFailedNotification(newItem);
+                        }
+                    }
+                });
+            }
+
+            showTaskCompletedNotification(task) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #28a745;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-weight: 600;
+                    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                    animation: slideInRight 0.3s ease;
+                `;
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.2rem;">✅</span>
+                        <div>
+                            <div style="font-weight: 600;">${task.title} 完成！</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">可以下载文件了</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+
+                // 5秒后自动移除
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            }
+
+            showTaskFailedNotification(task) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #dc3545;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-weight: 600;
+                    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+                    animation: slideInRight 0.3s ease;
+                `;
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.2rem;">❌</span>
+                        <div>
+                            <div style="font-weight: 600;">${task.title} 失败</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">请重试或检查输入</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+
+                // 5秒后自动移除
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            }
+        }
+
+        // 初始化应用
+        let audioVideoPlatform;
+        document.addEventListener('DOMContentLoaded', () => {
+            audioVideoPlatform = new AudioVideoPlatform();
+        });
+    </script>
+</body>
+</html>
