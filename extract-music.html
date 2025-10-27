@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提取背景音乐 </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Phone Frame Container */
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 8px;
+            box-shadow: 0 0 0 2px #333, 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+
+        /* Home Indicator */
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            z-index: 10;
+        }
+
+        /* Android ActionBar */
+        .action-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 5;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #667eea;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 16px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .back-button:active {
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(0.95);
+        }
+
+        .action-bar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        /* App Content */
+        .app-content {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 70px 20px 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .form-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .form-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .url-input {
+            font-family: 'Courier New', monospace;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 18px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-container {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #fee;
+            color: #c33;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .error-container.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .error-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .form-validation {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-validation.show {
+            display: block;
+        }
+
+        /* 查看生成结果按钮样式 */
+        .results-btn {
+            width: 100%;
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .results-btn:active {
+            transform: translateY(-1px);
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .results-icon {
+            font-size: 1.2rem;
+        }
+
+        .results-text {
+            font-size: 0.9rem;
+        }
+
+        /* Success notification */
+        .success-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 9999;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        /* Page transition animations */
+        .app-content {
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 400px) {
+            .phone-frame {
+                width: 100%;
+                max-width: 350px;
+                height: 100vh;
+                max-height: 700px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="phone-screen">
+            
+            <!-- Android ActionBar -->
+            <div class="action-bar">
+                <button class="back-button" onclick="goBack()">←</button>
+                <div class="action-bar-title">提取背景音乐</div>
+            </div>
+
+            <div class="app-content">
+                <div class="form-container">
+                    <div class="form-header">
+                        <div class="form-icon">🎵</div>
+                        <div class="form-title">提取去除人声背景音乐</div>
+                        <div class="form-description">
+                            从视频中智能提取背景音乐，AI去除人声, 保留伴奏
+                        </div>
+                    </div>
+
+                    <form id="extractMusicForm">
+                        <div class="input-group">
+            
+                            <textarea 
+                                id="videoUrl" 
+                                class="input-field url-input" 
+                                placeholder="请复制粘贴视频链接到这里 (支持 TikTok)"
+                                rows="3"
+                                required
+                            ></textarea>
+                            <div class="form-validation" id="videoUrlValidation">请输入有效的视频链接</div>
+                        </div>
+<!-- 
+                        <button type="submit" id="extractBtn" class="generate-btn">
+                            🎵 提取背景音乐
+                        </button> -->
+                        
+                        <!-- 查看生成结果按钮 -->
+                        <a href="generation-results.html" class="results-btn">
+                            <span class="results-icon">📋</span>
+                            <span class="results-text">查看生成结果</span>
+                        </a>
+                    </form>
+
+                    <div class="error-container" id="extractError">
+                        <div class="error-icon">❌</div>
+                        <div id="extractErrorMessage">处理过程中出现错误，请稍后重试。</div>
+                    </div>
+                </div>
+            </div>
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+
+    <script>
+        class AudioVideoPlatform {
+            constructor() {
+                this.isProcessing = false; // 添加处理状态标志
+                this.init();
+            }
+
+            init() {
+                // 清除可能存在的缓存变量
+                this.clearHistoryCache();
+                
+                // 提取背景音乐表单
+                const extractForm = document.getElementById('extractMusicForm');
+                extractForm.addEventListener('submit', (e) => this.handleExtractMusic(e));
+                
+                // 监听输入框的粘贴事件
+                const videoUrlInput = document.getElementById('videoUrl');
+                videoUrlInput.addEventListener('paste', (e) => this.handlePaste(e));
+                
+                // 监听输入框的输入事件，检测URL
+                videoUrlInput.addEventListener('input', (e) => this.handleInput(e));
+            }
+
+            async handleExtractMusic(e) {
+                e.preventDefault();
+                
+                const videoUrl = document.getElementById('videoUrl').value.trim();
+                
+                if (!this.isValidUrl(videoUrl)) {
+                    this.showValidation('videoUrlValidation', '请输入有效的视频链接');
+                    return;
+                }
+
+                this.hideValidation('videoUrlValidation');
+                this.hideExtractError();
+
+                // Disable button during processing
+                const extractBtn = document.getElementById('extractBtn');
+                extractBtn.disabled = true;
+                extractBtn.textContent = '处理中...';
+
+                try {
+                    const result = await this.extractBackgroundMusic(videoUrl);
+                    this.showExtractSuccess('音频提取任务已提交，请查看历史记录');
+                    console.log('音频提取任务已提交:', result);
+                    
+                    // 延迟跳转，显示成功提示
+                    setTimeout(() => {
+                        this.notifyMainPageToShowHistory();
+                    }, 1000);
+                } catch (error) {
+                    this.showExtractError(error.message);
+                } finally {
+                    // Re-enable button
+                    extractBtn.disabled = false;
+                    extractBtn.textContent = '🎵 提取背景音乐';
+                }
+            }
+
+            async extractBackgroundMusic(videoUrl) {
+                // 调用本地API
+                const response = await fetch('/api/extract-music', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ videoUrl })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || '提取背景音乐失败');
+                }
+
+                return {
+                    success: true,
+                    message: result.message,
+                    taskId: result.taskId
+                };
+            }
+
+            isValidUrl(string) {
+                try {
+                    const url = new URL(string);
+                    const hostname = url.hostname.toLowerCase();
+                    
+                    // 检查是否是 TikTok 链接
+                    const validDomains = [
+                        'tiktok.com',
+                        'www.tiktok.com'
+                    ];
+                    
+                    return validDomains.some(domain => hostname === domain);
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            showValidation(elementId, message) {
+                const element = document.getElementById(elementId);
+                element.textContent = message;
+                element.classList.add('show');
+            }
+
+            hideValidation(elementId) {
+                document.getElementById(elementId).classList.remove('show');
+            }
+
+            showExtractError(message) {
+                document.getElementById('extractErrorMessage').textContent = message;
+                document.getElementById('extractError').classList.add('show');
+            }
+
+            hideExtractError() {
+                document.getElementById('extractError').classList.remove('show');
+            }
+
+            showExtractSuccess(message) {
+                // 创建临时成功提示
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-notification';
+                successDiv.textContent = message;
+                document.body.appendChild(successDiv);
+
+                // 3秒后自动移除
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        successDiv.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (successDiv.parentNode) {
+                                successDiv.parentNode.removeChild(successDiv);
+                            }
+                        }, 300);
+                    }
+                }, 3000);
+            }
+
+            // 处理粘贴事件
+            handlePaste(e) {
+                // 如果正在处理中，忽略新的粘贴事件
+                if (this.isProcessing) {
+                    return;
+                }
+                
+                // 延迟执行，等待粘贴内容完成
+                setTimeout(() => {
+                    this.checkAndAutoExtract();
+                }, 100);
+            }
+            
+            // 处理输入事件
+            handleInput(e) {
+                // 如果正在处理中，忽略输入事件
+                if (this.isProcessing) {
+                    return;
+                }
+                
+                // 延迟执行，避免频繁触发
+                clearTimeout(this.inputTimeout);
+                this.inputTimeout = setTimeout(() => {
+                    this.checkAndAutoExtract();
+                }, 1000);
+            }
+            
+            // 检查并自动提取
+            checkAndAutoExtract() {
+                const videoUrl = document.getElementById('videoUrl').value.trim();
+                
+                // 如果输入为空或正在处理中，不执行任何操作
+                if (!videoUrl || this.isProcessing) {
+                    return;
+                }
+                
+                // 检查是否是有效的URL
+                if (this.isValidUrl(videoUrl)) {
+                    // 设置处理状态
+                    this.isProcessing = true;
+                    
+                    // 显示自动提取提示
+                    this.showAutoExtractNotification();
+                    
+                    // 立即触发提取，成功后跳转
+                    this.autoExtractMusic(videoUrl);
+                } else {
+                    // 显示不支持的链接类型提示
+                    this.showUnsupportedLinkToast();
+                }
+            }
+            
+            // 显示自动提取通知
+            showAutoExtractNotification() {
+                // 创建自动提取提示
+                const notificationDiv = document.createElement('div');
+                notificationDiv.className = 'success-notification';
+                notificationDiv.style.background = '#17a2b8';
+                notificationDiv.textContent = '检测到有效链接，正在提取，请点击查看生成结果';
+                document.body.appendChild(notificationDiv);
+
+                
+            }
+            
+            // 显示不支持的链接类型提示
+            showUnsupportedLinkToast() {
+                // 创建错误提示
+                const toastDiv = document.createElement('div');
+                toastDiv.className = 'success-notification';
+                toastDiv.style.background = '#dc3545';
+                toastDiv.style.color = 'white';
+                toastDiv.innerHTML = '❌ 不支持的链接类型<br><small>仅支持 TikTok 链接</small>';
+                document.body.appendChild(toastDiv);
+
+                // 3秒后自动移除
+                setTimeout(() => {
+                    if (toastDiv.parentNode) {
+                        toastDiv.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (toastDiv.parentNode) {
+                                toastDiv.parentNode.removeChild(toastDiv);
+                            }
+                        }, 300);
+                    }
+                }, 3000);
+            }
+            
+            // 自动提取音乐
+            async autoExtractMusic(videoUrl) {
+                // 隐藏之前的错误信息
+                this.hideValidation('videoUrlValidation');
+                this.hideExtractError();
+
+                // 禁用按钮（如果存在）
+                const extractBtn = document.getElementById('extractBtn');
+                if (extractBtn) {
+                    extractBtn.disabled = true;
+                    extractBtn.textContent = '自动处理中...';
+                }
+
+                try {
+                    const result = await this.extractBackgroundMusic(videoUrl);
+                    console.log('自动音频提取任务已提交:', result);
+                    
+                    // 提交成功后才跳转
+                    this.notifyMainPageToShowHistory();
+                } catch (error) {
+                    this.showExtractError(error.message);
+                    // 出错时重置处理状态
+                    this.isProcessing = false;
+                } finally {
+                    // 重新启用按钮（如果存在）
+                    if (extractBtn) {
+                        extractBtn.disabled = false;
+                        extractBtn.textContent = '🎵 提取背景音乐';
+                    }
+                }
+            }
+
+            // 通知主页显示历史记录
+            notifyMainPageToShowHistory() {
+                // 使用localStorage来通知主页
+                localStorage.setItem('showHistory', 'true');
+                localStorage.setItem('lastAction', 'extract');
+                
+                // 立即跳转到生成结果页面
+                window.location.href = 'generation-results.html';
+            }
+            
+            // 重置处理状态（供外部调用）
+            resetProcessingState() {
+                this.isProcessing = false;
+            }
+            
+            // 清除历史记录缓存
+            clearHistoryCache() {
+                localStorage.removeItem('showHistory');
+                localStorage.removeItem('lastAction');
+            }
+        }
+
+        // 返回按钮功能
+        function goBack() {
+            // 添加页面退出动画
+            const appContent = document.querySelector('.app-content');
+            appContent.style.animation = 'slideOutLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 250);
+        }
+
+        // 添加退出动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOutLeft {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(-100%); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 初始化应用
+        let audioVideoPlatform;
+        document.addEventListener('DOMContentLoaded', () => {
+            audioVideoPlatform = new AudioVideoPlatform();
+        });
+    </script>
+</body>
+</html>

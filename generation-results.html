@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成结果 - Collart Audio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Phone Frame Container */
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 8px;
+            box-shadow: 0 0 0 2px #333, 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Android Status Bar */
+        .status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 24px;
+            background: #667eea;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Material Design App Bar */
+        .action-bar {
+            position: absolute;
+            top: 24px;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            z-index: 5;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #667eea;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 16px;
+            border-radius: 50%;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .back-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(102, 126, 234, 0.12);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .back-button:active::before {
+            width: 48px;
+            height: 48px;
+        }
+
+        .action-bar-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: rgba(0, 0, 0, 0.87);
+            flex: 1;
+            letter-spacing: 0.15px;
+        }
+
+        /* App Content */
+        .app-content {
+            width: 100%;
+            height: 100%;
+            background: #f5f5f5;
+            padding: 96px 0 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* History Section */
+        .history-section {
+            background: #fff;
+            padding: 16px;
+            border-radius: 4px;
+            color: rgba(0, 0, 0, 0.87);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            margin: 16px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .history-title {
+            font-size: 20px;
+            font-weight: 500;
+            margin: 0;
+            color: rgba(0, 0, 0, 0.87);
+            letter-spacing: 0.15px;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.24);
+            position: relative;
+            overflow: hidden;
+            min-height: 36px;
+        }
+
+        .refresh-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .refresh-btn:active {
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.32);
+        }
+
+        .refresh-btn:active::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            background: #fff;
+            border-radius: 4px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .history-item:active {
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-item-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+            color: rgba(0, 0, 0, 0.87);
+            letter-spacing: 0.15px;
+        }
+
+        .history-item-type {
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.4px;
+        }
+
+        .history-item-type.extract {
+            background: rgba(34, 197, 94, 0.12);
+            color: #10b981;
+        }
+
+        .history-item-type.synthesize {
+            background: rgba(99, 102, 241, 0.12);
+            color: #6366f1;
+        }
+
+        .history-item-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .history-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-info-icon {
+            font-size: 16px;
+        }
+
+        .history-info-text {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.6);
+            font-weight: 400;
+        }
+
+        .history-item-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .history-action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 36px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.4px;
+        }
+
+        .download-history-btn {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.24);
+        }
+
+        .download-history-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .download-history-btn:active {
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.32);
+        }
+
+        .download-history-btn:active::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .delete-history-btn {
+            background: #f44336;
+            color: white;
+            box-shadow: 0 2px 4px rgba(244, 67, 54, 0.24);
+        }
+
+        .delete-history-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .delete-history-btn:active {
+            box-shadow: 0 4px 8px rgba(244, 67, 54, 0.32);
+        }
+
+        .delete-history-btn:active::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .history-loading {
+            text-align: center;
+            padding: 32px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(102, 126, 234, 0.12);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 32px;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .history-empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .history-empty-text {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        /* Page transition animations */
+        .app-content {
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 400px) {
+            .phone-frame {
+                width: 100%;
+                max-width: 350px;
+                height: 100vh;
+                max-height: 700px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="phone-screen">
+            
+            <!-- Android Status Bar -->
+            <div class="status-bar">
+                <div class="status-bar-left">
+                    <span>9:41</span>
+                </div>
+                <div class="status-bar-right">
+                    <span>📶</span>
+                    <span>📶</span>
+                    <span>🔋</span>
+                </div>
+            </div>
+            
+            <!-- Material Design App Bar -->
+            <div class="action-bar">
+                <button class="back-button" onclick="goBack()">←</button>
+                <div class="action-bar-title">生成结果</div>
+            </div>
+
+            <div class="app-content">
+                <!-- 历史记录模块 -->
+                <div class="history-section" id="historySection">
+                    <div class="history-header">
+                        <h2 class="history-title">📋 处理历史</h2>
+                        <button id="refreshHistoryBtn" class="refresh-btn">🔄 刷新</button>
+                    </div>
+                    
+                    <div class="history-list" id="historyList">
+                        <div class="history-loading">
+                            <div class="spinner"></div>
+                            <p>正在加载历史记录...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AudioVideoPlatform {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                // 历史记录功能
+                this.setupHistory();
+                
+                // 设置自动刷新历史记录
+                this.setupAutoRefresh();
+                
+                // 检查是否需要显示历史记录
+                this.checkHistoryNotification();
+                
+                // 页面加载时自动加载历史记录
+                this.loadHistory();
+            }
+
+            // 历史记录相关方法
+            setupHistory() {
+                const refreshBtn = document.getElementById('refreshHistoryBtn');
+                refreshBtn.addEventListener('click', () => this.loadHistory());
+            }
+
+            async loadHistory() {
+                const historyList = document.getElementById('historyList');
+                
+                try {
+                    // 显示加载状态
+                    historyList.innerHTML = `
+                        <div class="history-loading">
+                            <div class="spinner"></div>
+                            <p>正在加载历史记录...</p>
+                        </div>
+                    `;
+
+                    const response = await fetch('/api/history');
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.renderHistory(result.data);
+                    } else {
+                        throw new Error(result.message || '加载历史记录失败');
+                    }
+                } catch (error) {
+                    console.error('加载历史记录错误:', error);
+                    historyList.innerHTML = `
+                        <div class="history-empty">
+                            <div class="history-empty-icon">❌</div>
+                            <div class="history-empty-text">加载历史记录失败</div>
+                        </div>
+                    `;
+                }
+            }
+
+            renderHistory(historyData) {
+                const historyList = document.getElementById('historyList');
+                
+                if (!historyData || historyData.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="history-empty">
+                            <div class="history-empty-icon">📋</div>
+                            <div class="history-empty-text">暂无历史记录</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 检查状态变化并显示通知
+                this.checkStatusChanges(historyData);
+
+                historyList.innerHTML = historyData.map(item => {
+                    // 根据状态决定显示内容
+                    const isProcessing = item.status === 'processing';
+                    const isCompleted = item.status === 'completed';
+                    const isFailed = item.status === 'failed';
+                    
+                    return `
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <h3 class="history-item-title">${item.title}</h3>
+                            <span class="history-item-type ${item.type}">
+                                ${item.type === 'extract' ? '🎵 音频提取' : '🎬 视频制作'}
+                            </span>
+                        </div>
+                        
+                        <div class="history-item-info">
+                            ${isProcessing ? `
+                                <!-- 处理中状态：显示加载动画 -->
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 8px;">
+                                    <div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 0;"></div>
+                                    <span style="color: #667eea; font-weight: 500;">处理中...</span>
+                                </div>
+                            ` : isCompleted ? `
+                                <!-- 完成状态：显示完成状态 -->
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #e8f5e9; border-radius: 4px; margin-bottom: 8px;">
+                                    <span style="color: #4caf50; font-weight: 500;">✓ 处理完成</span>
+                                </div>
+                            ` : isFailed ? `
+                                <!-- 失败状态 -->
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #ffebee; border-radius: 4px; margin-bottom: 8px;">
+                                    <span style="color: #f44336; font-weight: 500;">✗ 处理失败</span>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="history-info-item">
+                                <span class="history-info-icon">📅</span>
+                                <span class="history-info-text">创建时间: ${this.formatDetailedDate(item.createdAt)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="history-item-actions">
+                            ${isCompleted && item.downloadUrl ? `
+                                <a href="${item.downloadUrl}" class="history-action-btn download-history-btn" download>
+                                    📥 下载
+                                </a>
+                            ` : isProcessing ? `
+                                <span class="history-action-btn" style="background: #ffc107; color: white; box-shadow: 0 2px 4px rgba(255, 193, 7, 0.24); opacity: 1;">
+                                    <div class="spinner" style="display: inline-block; width: 14px; height: 14px; border-width: 2px; margin-right: 6px;"></div>
+                                    处理中
+                                </span>
+                            ` : isFailed ? `
+                                <span class="history-action-btn" style="background: #f44336; color: white; box-shadow: 0 2px 4px rgba(244, 67, 54, 0.24); opacity: 1;">
+                                    ❌ 失败
+                                </span>
+                            ` : `
+                                <span class="history-action-btn" style="opacity: 0.5; cursor: not-allowed;">
+                                    ⏳ 等待中
+                                </span>
+                            `}
+                            <button class="history-action-btn delete-history-btn" onclick="audioVideoPlatform.deleteHistory('${item.id}')">
+                                🗑️ 删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
+
+            async deleteHistory(id) {
+                if (!confirm('确定要删除这条记录吗？')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 重新加载历史记录
+                        this.loadHistory();
+                    } else {
+                        throw new Error(result.message || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除历史记录错误:', error);
+                    alert('删除记录失败: ' + error.message);
+                }
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) {
+                    return '刚刚';
+                } else if (diffMins < 60) {
+                    return `${diffMins}分钟前`;
+                } else if (diffHours < 24) {
+                    return `${diffHours}小时前`;
+                } else if (diffDays < 7) {
+                    return `${diffDays}天前`;
+                } else {
+                    return date.toLocaleDateString();
+                }
+            }
+
+            formatDetailedDate(dateString) {
+                const date = new Date(dateString);
+                // 获取UTC时间的各个部分
+                const utcTime = date.getTime();
+                // 转换为北京时间 (UTC+8) - 加8小时
+                const beijingOffset = 8 * 60 * 60 * 1000;
+                const beijingTime = new Date(utcTime + beijingOffset);
+                
+                // 格式化为 YYYY-MM-DD HH:MM:SS
+                const year = beijingTime.getUTCFullYear();
+                const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(beijingTime.getUTCDate()).padStart(2, '0');
+                const hours = String(beijingTime.getUTCHours()).padStart(2, '0');
+                const minutes = String(beijingTime.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(beijingTime.getUTCSeconds()).padStart(2, '0');
+                
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
+
+            setupAutoRefresh() {
+                // 每5秒自动刷新数据
+                setInterval(() => {
+                    this.autoRefreshHistory();
+                }, 5000); // 每5秒刷新一次
+            }
+
+            async autoRefreshHistory() {
+                try {
+                    const response = await fetch('/api/history');
+                    const result = await response.json();
+
+                    if (result.success && result.data) {
+                        // 保存旧的状态用于检测变化
+                        const oldData = this.getCurrentHistoryData();
+                        
+                        // 更新历史记录
+                        this.renderHistory(result.data);
+                        
+                        // 检测状态变化并显示通知
+                        if (oldData && oldData.length > 0) {
+                            this.detectStatusChanges(oldData, result.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error('自动刷新历史记录失败:', error);
+                }
+            }
+
+            getCurrentHistoryData() {
+                // 从当前页面获取历史记录数据
+                const items = document.querySelectorAll('.history-item');
+                return Array.from(items).map(item => {
+                    const type = item.querySelector('.history-item-type').textContent.includes('音频') ? 'extract' : 'synthesize';
+                    const downloadBtn = item.querySelector('.download-history-btn');
+                    let status = 'processing';
+                    if (downloadBtn) {
+                        status = 'completed';
+                    } else if (item.querySelector('.history-action-btn').textContent.includes('失败')) {
+                        status = 'failed';
+                    }
+                    return { type, status };
+                });
+            }
+
+            detectStatusChanges(oldData, newData) {
+                // 检测状态变化并显示通知
+                newData.forEach((newItem, index) => {
+                    if (index < oldData.length) {
+                        const oldItem = oldData[index];
+                        if (oldItem.status !== newItem.status) {
+                            if (oldItem.status === 'processing' && newItem.status === 'completed') {
+                                this.showTaskCompletedNotification(newItem);
+                            } else if (oldItem.status === 'processing' && newItem.status === 'failed') {
+                                this.showTaskFailedNotification(newItem);
+                            }
+                        }
+                    }
+                });
+            }
+
+            checkStatusChanges(newHistoryData) {
+                // 获取当前显示的历史记录状态
+                const currentItems = document.querySelectorAll('.history-item');
+                const currentStatuses = Array.from(currentItems).map(item => {
+                    const statusElement = item.querySelector('.history-action-btn');
+                    if (statusElement) {
+                        if (statusElement.textContent.includes('下载')) {
+                            return 'completed';
+                        } else if (statusElement.textContent.includes('处理中')) {
+                            return 'processing';
+                        } else if (statusElement.textContent.includes('失败')) {
+                            return 'failed';
+                        }
+                    }
+                    return 'unknown';
+                });
+
+                // 检查状态变化
+                newHistoryData.forEach((newItem, index) => {
+                    const currentStatus = currentStatuses[index];
+                    const newStatus = newItem.status;
+
+                    if (currentStatus !== newStatus) {
+                        if (currentStatus === 'processing' && newStatus === 'completed') {
+                            this.showTaskCompletedNotification(newItem);
+                        } else if (currentStatus === 'processing' && newStatus === 'failed') {
+                            this.showTaskFailedNotification(newItem);
+                        }
+                    }
+                });
+            }
+
+            showTaskCompletedNotification(task) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #4caf50;
+                    color: white;
+                    padding: 16px 20px;
+                    border-radius: 4px;
+                    z-index: 9999;
+                    font-weight: 500;
+                    font-family: 'Roboto', sans-serif;
+                    box-shadow: 0 3px 6px rgba(76, 175, 80, 0.16), 0 3px 6px rgba(76, 175, 80, 0.23);
+                    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                `;
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.2rem;">✅</span>
+                        <div>
+                            <div style="font-weight: 600;">${task.title} 完成！</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">可以下载文件了</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+
+                // 5秒后自动移除
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            }
+
+            showTaskFailedNotification(task) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #f44336;
+                    color: white;
+                    padding: 16px 20px;
+                    border-radius: 4px;
+                    z-index: 9999;
+                    font-weight: 500;
+                    font-family: 'Roboto', sans-serif;
+                    box-shadow: 0 3px 6px rgba(244, 67, 54, 0.16), 0 3px 6px rgba(244, 67, 54, 0.23);
+                    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                `;
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.2rem;">❌</span>
+                        <div>
+                            <div style="font-weight: 600;">${task.title} 失败</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">请重试或检查输入</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+
+                // 5秒后自动移除
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            }
+
+            // 检查是否需要显示历史记录
+            checkHistoryNotification() {
+                const shouldShowHistory = localStorage.getItem('showHistory');
+                const lastAction = localStorage.getItem('lastAction');
+                
+                if (shouldShowHistory === 'true') {
+                    // 清除通知标记
+                    localStorage.removeItem('showHistory');
+                    localStorage.removeItem('lastAction');
+                    
+                    // 显示操作完成的通知
+                    if (lastAction === 'extract') {
+                        this.showTaskCompletedNotification({
+                            title: '音频提取任务',
+                            type: 'extract'
+                        });
+                    } else if (lastAction === 'synthesize') {
+                        this.showTaskCompletedNotification({
+                            title: '视频制作任务',
+                            type: 'synthesize'
+                        });
+                    }
+                }
+            }
+        }
+
+        // 返回按钮功能
+        function goBack() {
+            // 添加页面退出动画
+            const appContent = document.querySelector('.app-content');
+            appContent.style.animation = 'slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 300);
+        }
+
+        // 添加退出动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOutLeft {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(-100%); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 初始化应用
+        let audioVideoPlatform;
+        document.addEventListener('DOMContentLoaded', () => {
+            audioVideoPlatform = new AudioVideoPlatform();
+        });
+    </script>
+</body>
+</html>

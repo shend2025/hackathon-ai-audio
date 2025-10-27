@@ -3,6 +3,7 @@ const path = require('path');
 const ftp = require('basic-ftp');
 const fs = require('fs');
 const { Readable } = require("stream");
+const { v4: uuidv4 } = require('uuid');
 const Database = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -51,7 +52,7 @@ async function initDatabase() {
 app.post('/api/extract-music', async (req, res) => {
     try {
         const { videoUrl } = req.body;
-        const taskId = `extract_${Date.now()}`;
+        const taskId = uuidv4();
         
         console.log('提取背景音乐请求:', { videoUrl, taskId });
         
@@ -60,9 +61,7 @@ app.post('/api/extract-music', async (req, res) => {
             id: taskId,
             type: 'extract',
             title: '背景音乐提取',
-            fileName: `background-music-${Date.now()}.mp3`,
-            fileSize: '3.2 MB',
-            duration: '2:15',
+            fileName: `${taskId}.mp3`,
             status: 'processing',
             downloadUrl: null
         };
@@ -71,7 +70,7 @@ app.post('/api/extract-music', async (req, res) => {
         await db.insertTask(task);
         
         // 异步处理任务
-        processExtractMusic(taskId, videoUrl);
+        await processExtractMusic(taskId, videoUrl);
         
         res.json({
             success: true,
@@ -91,18 +90,202 @@ app.post('/api/extract-music', async (req, res) => {
 // 异步处理音频提取
 async function processExtractMusic(taskId, videoUrl) {
     try {
-        // 模拟处理步骤
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const jenkinsUrl = `http://192.168.50.14:8080/job/remove_vocal/buildWithParameters`;
         
-        // 更新任务状态到数据库
-        const downloadUrl = `http://localhost:${PORT}/downloads/extracted-music-${Date.now()}.mp3`;
-        await db.updateTaskStatus(taskId, 'completed', downloadUrl);
+        // 生成时间戳确保每次请求的参数都不同，避免 Jenkins 去重
+        const timestamp = Date.now();
         
-        console.log(`音频提取任务 ${taskId} 完成`);
+        const params = new URLSearchParams({
+            token: 'build_token',
+            url: videoUrl,
+            task_id: taskId,
+            random: timestamp.toString()
+        });
+        
+        const jenkinsApi = `${jenkinsUrl}?${params.toString()}`;
+        
+        console.log(`触发 Jenkins 构建: ${jenkinsApi}`);
+        
+        // 步骤1: 触发 Jenkins 构建
+        const triggerResponse = await fetch(jenkinsApi, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!triggerResponse.ok) {
+            throw new Error(`Jenkins 触发失败: ${triggerResponse.status} ${triggerResponse.statusText}`);
+        }
+        
+        // Jenkins 触发成功会返回 201，并包含 queue item 的 URL
+        const location = triggerResponse.headers.get('location');
+        console.log('Jenkins 队列项:', location);
+        
+        if (!location) {
+            throw new Error('无法获取 Jenkins 队列项');
+        }
+        
+        // 步骤2: 从队列项获取构建号
+        const buildNumber = await waitForBuildStart(location);
+        
+        console.log(`构建开始，构建号: ${buildNumber}`);
+        
+        // 步骤3: 轮询查询构建状态
+        const buildResult = await pollBuildStatus('remove_vocal',buildNumber);
+        
+        console.log(`构建完成，状态: ${buildResult.result}`);
+        
+        // 步骤4: 根据结果更新任务状态
+        if (buildResult.result === 'SUCCESS') {
+            const downloadUrl = `http://192.168.50.11/ftp/music/${taskId}.mp3`;
+            await db.updateTaskStatus(taskId, 'completed', downloadUrl);
+            console.log(`音频提取任务 ${taskId} 完成`);
+        } else {
+            throw new Error(`构建失败: ${buildResult.result}`);
+        }
+        
     } catch (error) {
         console.error(`音频提取任务 ${taskId} 失败:`, error);
         await db.updateTaskStatus(taskId, 'failed');
     }
+}
+
+
+async function processSynthesizeVideo(taskId, videoUrl, uploadedFileUrl) {
+    try {
+        const jenkinsUrl = `http://192.168.50.14:8080/job/music_gen/buildWithParameters`;
+        
+        // 生成时间戳确保每次请求的参数都不同，避免 Jenkins 去重
+        const timestamp = Date.now();
+        
+        const params = new URLSearchParams({
+            token: 'build_token',
+            url: videoUrl,
+            task_id: taskId,
+            uploaded_file_url: uploadedFileUrl,
+            random: timestamp.toString()
+        });
+        
+        const jenkinsApi = `${jenkinsUrl}?${params.toString()}`;
+        
+        console.log(`触发 Jenkins 构建: ${jenkinsApi}`);
+        
+        // 步骤1: 触发 Jenkins 构建
+        const triggerResponse = await fetch(jenkinsApi, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!triggerResponse.ok) {
+            throw new Error(`Jenkins 触发失败: ${triggerResponse.status} ${triggerResponse.statusText}`);
+        }
+        
+        // Jenkins 触发成功会返回 201，并包含 queue item 的 URL
+        const location = triggerResponse.headers.get('location');
+        console.log('Jenkins 队列项:', location);
+        
+        if (!location) {
+            throw new Error('无法获取 Jenkins 队列项');
+        }
+        
+        // 步骤2: 从队列项获取构建号
+        const buildNumber = await waitForBuildStart(location);
+        
+        console.log(`构建开始，构建号: ${buildNumber}`);
+        
+        // 步骤3: 轮询查询构建状态
+        const buildResult = await pollBuildStatus('music_gen',buildNumber);
+        
+        console.log(`构建完成，状态: ${buildResult.result}`);
+        
+        // 步骤4: 根据结果更新任务状态
+        if (buildResult.result === 'SUCCESS') {
+            const downloadUrl = `http://192.168.50.11/ftp/music/${taskId}.mp3`;
+            await db.updateTaskStatus(taskId, 'completed', downloadUrl);
+            console.log(`音频提取任务 ${taskId} 完成`);
+        } else {
+            throw new Error(`构建失败: ${buildResult.result}`);
+        }
+        
+    } catch (error) {
+        console.error(`音频提取任务 ${taskId} 失败:`, error);
+        await db.updateTaskStatus(taskId, 'failed');
+    }
+}
+
+// 等待构建从队列开始执行
+async function waitForBuildStart(queueUrl) {
+    for (let i = 0; i < 30; i++) { // 最多等待 60 秒
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        try {
+            const response = await fetch(`${queueUrl}/api/json`);
+            const queueData = await response.json();
+            
+            if (queueData.executable) {
+                // 构建已开始
+                return queueData.executable.number;
+            }
+            
+            if (queueData.cancelled) {
+                throw new Error('Jenkins 构建被取消');
+            }
+            
+            console.log(`等待构建从队列中开始... (${i + 1}/30)`);
+        } catch (error) {
+            console.error('查询队列状态失败:', error);
+            throw error;
+        }
+    }
+    
+    throw new Error('构建超时未开始');
+}
+
+// 轮询查询构建状态
+async function pollBuildStatus(jobName,buildNumber) {
+    // const jobName = 'remove_vocal';
+    const MAX_RETRIES = 300;
+    const POLLING_INTERVAL = 2000;
+    
+    let lastResult = null;
+    let retries = 0;
+    
+    while (retries < MAX_RETRIES) {
+        try {
+            const buildUrl = `http://192.168.50.14:8080/job/${jobName}/${buildNumber}/api/json`;
+            const response = await fetch(buildUrl);
+            
+            if (!response.ok) {
+                throw new Error(`查询构建状态失败: ${response.status}`);
+            }
+            
+            const buildData = await response.json();
+            
+            console.log(`构建状态: ${buildData.result || 'building'} (${retries + 1}/${MAX_RETRIES})`);
+            
+            // 如果构建完成
+            if (buildData.result) {
+                lastResult = buildData;
+                break;
+            }
+            
+            retries++;
+            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+            
+        } catch (error) {
+            console.error('轮询构建状态失败:', error);
+            throw error;
+        }
+    }
+    
+    if (!lastResult) {
+        throw new Error('构建状态查询超时');
+    }
+    
+    return lastResult;
 }
 // API路由 - 文件上传
 app.post('/api/upload', async (req, res) => {
@@ -150,7 +333,7 @@ app.post('/api/upload', async (req, res) => {
                 console.log(`文件 '${file.name}' 上传成功，保存为 '${fileName}'`);
                 uploadResults.success.push({
                     originalName: file.name,
-                    uploadedName: fileName,
+                    uploadedName: 'http://192.168.50.11/ftp/'+fileName,
                     size: fileBuffer.length
                 });
 
@@ -189,18 +372,20 @@ app.post('/api/upload', async (req, res) => {
 app.post('/api/synthesize-video', async (req, res) => {
     try {
         const { videoUrl, uploadedFileUrl } = req.body;
-        const taskId = `synthesize_${Date.now()}`;
         
-        console.log('智能制作视频请求:', { videoUrl, uploadedFileUrl, taskId });
+        // 生成UUID
+        const taskId = uuidv4();
+        
+        const userUrl = `http://192.168.50.11/ftp/user_${taskId}.mp4`;
+
+        console.log('智能制作视频请求:', { videoUrl, userUrl, taskId });
         
         // 创建处理任务
         const task = {
             id: taskId,
             type: 'synthesize',
+            fileName: `${taskId}.mp3`,
             title: '视频制作',
-            fileName: `synthesized-video-${Date.now()}.mp4`,
-            fileSize: '15.8 MB',
-            duration: '3:45',
             status: 'processing',
             downloadUrl: null
         };
@@ -209,7 +394,7 @@ app.post('/api/synthesize-video', async (req, res) => {
         await db.insertTask(task);
         
         // 异步处理任务
-        processSynthesizeVideo(taskId, videoUrl, uploadedFileUrl);
+         await processSynthesizeVideo(taskId, videoUrl, uploadedFileUrl);
         
         res.json({
             success: true,
@@ -226,22 +411,6 @@ app.post('/api/synthesize-video', async (req, res) => {
     }
 });
 
-// 异步处理视频合成
-async function processSynthesizeVideo(taskId, videoUrl, uploadedFileUrl) {
-    try {
-        // 模拟处理步骤
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // 更新任务状态到数据库
-        const downloadUrl = `http://localhost:${PORT}/downloads/synthesized-video-${Date.now()}.mp4`;
-        await db.updateTaskStatus(taskId, 'completed', downloadUrl);
-        
-        console.log(`视频合成任务 ${taskId} 完成`);
-    } catch (error) {
-        console.error(`视频合成任务 ${taskId} 失败:`, error);
-        await db.updateTaskStatus(taskId, 'failed');
-    }
-}
 
 const downloadsDir = path.join(__dirname, 'downloads');
 if (!fs.existsSync(downloadsDir)) {
